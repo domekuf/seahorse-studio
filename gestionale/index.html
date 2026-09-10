@@ -1,0 +1,1333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seahorse Studio — Management</title>
+<style>
+:root{
+  --bg:#0a0a0a; --surface:#111; --surface2:#161616; --surface3:#1c1c1c;
+  --border:#2e2e2e; --border-soft:#222;
+  --text:#ededed; --muted:#666; --muted2:#8a8a8a;
+  --teal:#4abcbc; --teal-dim:#2d7373; --teal-glow:#4abcbc33;
+  --danger:#ef4444; --warn:#f59e0b; --ok:#4abcbc;
+  --r:6px;
+  --mono:ui-monospace,Menlo,"SF Mono",Monaco,"Cascadia Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--mono);font-size:13px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+a{color:var(--teal);text-decoration:none}
+
+/* ---------- LOCK SCREEN ---------- */
+#lock{
+  position:fixed;inset:0;z-index:1000;background:#000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+}
+#lock.hidden{display:none}
+#lock .logo-mark{width:132px;height:132px}
+#lock form{display:flex;flex-direction:column;gap:12px;width:280px}
+#lock input{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:11px 13px;text-align:center;letter-spacing:.28em;outline:none;
+}
+#lock input:focus{border-color:var(--teal)}
+#lock button{
+  background:var(--teal);color:#04201f;border:none;border-radius:var(--r);
+  padding:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;
+}
+#lock button:hover{background:#5fd0d0}
+#lock button:disabled{opacity:.5;cursor:default}
+#lock-err{color:var(--danger);min-height:18px;text-align:center;font-size:12px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.shake{animation:shake .35s}
+
+/* ---------- SHELL ---------- */
+#app{display:none}
+#app.on{display:block}
+#sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:0 18px 20px;border-bottom:1px solid var(--border-soft)}
+.brand .logo-mark{width:40px;height:40px;flex:0 0 40px}
+.brand b{font-size:12px;letter-spacing:.11em;display:block;line-height:1.25}
+.brand span{font-size:12px;letter-spacing:.11em;color:var(--teal)}
+nav{padding:14px 10px;flex:1;display:flex;flex-direction:column;gap:2px}
+nav a{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 11px;border-radius:var(--r);color:var(--muted2);
+  letter-spacing:.03em;transition:background .12s,color .12s;
+}
+nav a:hover{background:var(--surface2);color:var(--text)}
+nav a.active{background:var(--surface3);color:var(--teal)}
+nav a .count{font-size:11px;color:var(--muted)}
+.side-foot{padding:0 18px;display:flex;flex-direction:column;gap:10px}
+#sync{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+#sync .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .2s,box-shadow .2s}
+#sync.live .dot{background:var(--teal)}
+#sync.pulse .dot{background:var(--teal);box-shadow:0 0 0 4px var(--teal-glow)}
+#lockBtn{
+  background:transparent;border:1px solid var(--border);border-radius:var(--r);
+  padding:7px;color:var(--muted2);cursor:pointer;letter-spacing:.08em;
+}
+#lockBtn:hover{border-color:var(--danger);color:var(--danger)}
+main{margin-left:240px;padding:26px 30px 70px;max-width:1500px}
+
+/* ---------- COMMON ---------- */
+.head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+h1{font-size:17px;font-weight:700;letter-spacing:.05em}
+.sub{color:var(--muted);font-size:12px;margin-top:3px}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.btn{
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);
+  padding:7px 13px;cursor:pointer;letter-spacing:.03em;transition:.12s;white-space:nowrap;
+}
+.btn:hover{border-color:var(--muted);background:var(--surface3)}
+.btn.primary{background:var(--teal);color:#04201f;border-color:var(--teal);font-weight:700}
+.btn.primary:hover{background:#5fd0d0}
+.btn.danger:hover{border-color:var(--danger);color:var(--danger)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:default}
+input,select,textarea{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:7px 10px;outline:none;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--teal)}
+input[type=number]{text-align:right}
+input.inv{border-color:var(--danger)}
+label{display:block;font-size:11px;color:var(--muted);letter-spacing:.07em;margin-bottom:5px}
+.field{margin-bottom:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:18px}
+.card>h2{
+  font-size:11px;letter-spacing:.15em;color:var(--muted);font-weight:600;
+  padding:12px 16px;border-bottom:1px solid var(--border-soft);
+}
+.card>.body{padding:16px}
+
+table{width:100%;border-collapse:collapse}
+th{
+  text-align:left;font-size:10px;letter-spacing:.14em;color:var(--muted);font-weight:600;
+  padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:9px 12px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
+tbody tr:hover{background:var(--surface2)}
+tbody tr.exp{background:var(--surface2)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+
+.tag{
+  display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;
+  letter-spacing:.08em;border:1px solid var(--border);color:var(--muted2);
+}
+.tag.teal{border-color:var(--teal-dim);color:var(--teal)}
+.tag.red{border-color:#7f1d1d;color:var(--danger)}
+.tag.amber{border-color:#78350f;color:var(--warn)}
+.tag.grey{border-color:var(--border);color:var(--muted)}
+.warn-txt{color:var(--danger)}
+.ok-txt{color:var(--teal)}
+.mut{color:var(--muted)}
+
+/* ---------- MODAL ---------- */
+#modal{position:fixed;inset:0;z-index:900;background:#000000cc;display:none;align-items:flex-start;justify-content:center;padding:60px 20px;overflow:auto}
+#modal.on{display:flex}
+#modal .box{background:var(--surface);border:1px solid var(--border);border-radius:8px;width:100%;max-width:560px}
+#modal .box h3{font-size:13px;letter-spacing:.08em;padding:15px 18px;border-bottom:1px solid var(--border-soft)}
+#modal .box .content{padding:18px}
+#modal .box .foot{display:flex;justify-content:flex-end;gap:9px;padding:14px 18px;border-top:1px solid var(--border-soft)}
+
+/* ---------- TOAST ---------- */
+#toasts{position:fixed;right:20px;bottom:20px;z-index:1100;display:flex;flex-direction:column;gap:9px}
+.toast{
+  background:var(--surface3);border:1px solid var(--border);border-left:3px solid var(--teal);
+  border-radius:var(--r);padding:11px 15px;max-width:360px;box-shadow:0 8px 26px #000a;
+}
+.toast.err{border-left-color:var(--danger)}
+.toast b{display:block;font-size:11px;letter-spacing:.09em;margin-bottom:2px}
+.toast span{color:var(--muted2);font-size:12px}
+
+/* ---------- QUOTE BUILDER ---------- */
+.line-tbl td{padding:6px 8px}
+.line-tbl input,.line-tbl select{padding:5px 8px}
+.totals{display:flex;flex-direction:column;gap:0}
+.totals .t{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-soft)}
+.totals .t span:last-child{font-variant-numeric:tabular-nums}
+.totals .t.big{border-bottom:none;padding-top:13px;font-size:15px;font-weight:700;color:var(--teal)}
+.totals .t.sub{color:var(--muted)}
+.totals .t.neg span:last-child{color:var(--danger)}
+.switch{display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
+.switch input{width:auto;accent-color:var(--teal)}
+.avail{font-size:11px;color:var(--muted)}
+
+/* ---------- CALENDAR ---------- */
+#cal-wrap{display:grid;grid-template-columns:210px 1fr;gap:18px;align-items:start}
+#cal-filters{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;position:sticky;top:26px}
+#cal-filters h4{font-size:10px;letter-spacing:.14em;color:var(--muted);margin:14px 0 8px}
+#cal-filters h4:first-child{margin-top:0}
+#cal-filters label{display:flex;align-items:center;gap:7px;margin:0 0 5px;font-size:12px;color:var(--text);letter-spacing:0;cursor:pointer}
+#cal-filters input{width:auto;accent-color:var(--teal)}
+#calendar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.fc{--fc-border-color:var(--border-soft);--fc-page-bg-color:transparent;--fc-neutral-bg-color:var(--surface2);--fc-today-bg-color:#4abcbc12;font-size:12px}
+.fc .fc-toolbar-title{font-size:14px;letter-spacing:.05em}
+.fc .fc-button{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important;box-shadow:none!important;text-transform:capitalize;font-size:12px!important}
+.fc .fc-button:hover{background:var(--surface3)!important}
+.fc .fc-button-primary:disabled{opacity:.4}
+.fc .fc-daygrid-day-number{color:var(--muted2);font-size:11px}
+.fc .fc-col-header-cell-cushion{color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.fc-event{border:none!important;font-size:11px;padding:1px 4px;cursor:pointer}
+
+/* ---------- PRINT ---------- */
+#print-area{display:none}
+@media print{
+  @page{size:A4;margin:15mm}
+  body{background:#fff;color:#000;font-size:11px}
+  #sidebar,#lock,#toasts,#modal,main{display:none!important}
+  #print-area{display:block!important}
+  #print-area .p-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:18px}
+  #print-area .p-logo{width:74px;height:74px}
+  #print-area h2{font-size:15px;margin-bottom:5px}
+  #print-area table{width:100%;border-collapse:collapse;margin-bottom:14px}
+  #print-area th{border-bottom:1px solid #000;font-size:9px;color:#000;padding:5px 4px}
+  #print-area td{border-bottom:1px solid #ddd;padding:5px 4px;font-size:10px}
+  #print-area .p-sec{font-size:9px;letter-spacing:.14em;margin:14px 0 5px;color:#555}
+  #print-area .p-tot{margin-left:auto;width:290px}
+  #print-area .p-tot .t{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee}
+  #print-area .p-tot .t.big{font-weight:700;font-size:13px;border-top:2px solid #000;border-bottom:none;padding-top:7px}
+}
+@media (max-width:900px){
+  #sidebar{width:64px}
+  .brand b,.brand span,nav a .label,#sync span,.side-foot{display:none}
+  main{margin-left:64px;padding:20px 16px}
+  #cal-wrap{grid-template-columns:1fr}
+  .grid2,.grid3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOCK SCREEN ============ -->
+<div id="lock">
+  <svg class="logo-mark" viewBox="0 0 160 160" aria-label="Seahorse Studio">
+    <circle cx="80" cy="80" r="75" fill="none" stroke="#4abcbc" stroke-width="7"/>
+    <circle cx="80" cy="80" r="70" fill="#000"/>
+    <path d="M112 78 L124 88 L124 112 L112 102 Z" fill="#4abcbc"/>
+        <path d="M88 44 C106 60 106 86 94 102" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round"/>
+        <path d="M94 100 C82 118 62 120 62 133 C62 145 78 147 84 137" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+        <path d="M104 60 L118 70 L103 80 Z" fill="#fff"/>
+        <path d="M72 20 L93 31 L91 53 L69 49 Z" fill="#fff"/>
+        <path d="M70 43 L31 71 L73 59 Z" fill="#fff"/>
+        <path d="M73 22 L77 6 L85 27 Z" fill="#fff"/>
+        <path d="M85 27 L95 13 L94 33 Z" fill="#fff"/>
+        <circle cx="81" cy="37" r="3.4" fill="#000"/>
+  </svg>
+  <form id="lock-form">
+    <input id="lock-pw" type="password" placeholder="••••••••" autocomplete="current-password" autofocus>
+    <button type="submit" id="lock-btn">ENTER</button>
+    <div id="lock-err"></div>
+  </form>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <svg class="logo-mark" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="75" fill="none" stroke="#4abcbc" stroke-width="7"/>
+        <circle cx="80" cy="80" r="70" fill="#000"/>
+        <path d="M112 78 L124 88 L124 112 L112 102 Z" fill="#4abcbc"/>
+        <path d="M88 44 C106 60 106 86 94 102" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round"/>
+        <path d="M94 100 C82 118 62 120 62 133 C62 145 78 147 84 137" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+        <path d="M104 60 L118 70 L103 80 Z" fill="#fff"/>
+        <path d="M72 20 L93 31 L91 53 L69 49 Z" fill="#fff"/>
+        <path d="M70 43 L31 71 L73 59 Z" fill="#fff"/>
+        <path d="M73 22 L77 6 L85 27 Z" fill="#fff"/>
+        <path d="M85 27 L95 13 L94 33 Z" fill="#fff"/>
+        <circle cx="81" cy="37" r="3.4" fill="#000"/>
+      </svg>
+      <div><b>SEAHORSE</b><span>STUDIO</span></div>
+    </div>
+    <nav id="nav">
+      <a href="#inventory"><span class="label">Inventory</span><span class="count" id="c-eq"></span></a>
+      <a href="#clients"><span class="label">Clients</span><span class="count" id="c-cl"></span></a>
+      <a href="#technicians"><span class="label">Technicians</span><span class="count" id="c-te"></span></a>
+      <a href="#quote"><span class="label">New Quote</span></a>
+      <a href="#quotes"><span class="label">Quotes</span><span class="count" id="c-qu"></span></a>
+      <a href="#calendar"><span class="label">Calendar</span></a>
+    </nav>
+    <div class="side-foot">
+      <div id="sync"><i class="dot"></i><span>connecting</span></div>
+      <button id="lockBtn">LOCK</button>
+    </div>
+  </aside>
+  <main id="view"></main>
+</div>
+
+<div id="modal"><div class="box"><h3></h3><div class="content"></div><div class="foot"></div></div></div>
+<div id="toasts"></div>
+<div id="print-area"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.15/index.global.min.js"></script>
+<script>
+/* ============================================================
+   SEAHORSE STUDIO — Quote & Management Tool
+   Single file. Supabase backend. No build step.
+   ============================================================ */
+
+const SUPABASE_URL      = "https://szowimwblkxwgzhycxcx.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_0mEJXlKy6dJ9FeD1ZsG47w_q1_VmK1O";
+const STUDIO_EMAIL      = "studio@seahorsestudio.app";
+
+const CATEGORIES = ["PA","Monitors","Microphones","Lights","Rigging","Cabling","Other"];
+const ROLES      = ["Audio Tech","Lighting Tech","FOH Engineer","Rigger","General"];
+const CLIENT_T   = ["Private","Company","Public Entity"];
+const STATUSES   = ["Draft","Confirmed","Cancelled"];
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const state = { equipment:[], clients:[], technicians:[], quotes:[], ready:false };
+let draft = null;          // quote currently being edited
+let calendar = null;       // FullCalendar instance
+let calFilters = { techs:new Set(), cats:new Set(), init:false };
+
+/* ---------------- helpers ---------------- */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => (Number(n)||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
+const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const todayISO = () => new Date().toISOString().slice(0,10);
+const dIT = s => s ? String(s).slice(0,10).split("-").reverse().join("/") : "—";
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+
+function dayCount(start,end,setup){
+  if(!start || !end) return 0;
+  const a = Date.parse(start), b = Date.parse(end);
+  if(!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+  const d = Math.round((b-a)/86400000) + 1;
+  return (d>0 ? d : 0) + (setup ? 1 : 0);
+}
+const overlaps = (s1,e1,s2,e2) => !!(s1&&e1&&s2&&e2) && s1 <= e2 && s2 <= e1;
+
+function toast(title,msg,isErr){
+  const el = document.createElement("div");
+  el.className = "toast" + (isErr ? " err" : "");
+  el.innerHTML = `<b>${esc(title)}</b><span>${esc(msg||"")}</span>`;
+  $("#toasts").appendChild(el);
+  setTimeout(()=>el.remove(), isErr ? 7000 : 3200);
+}
+
+function modal(title, content, actions){
+  const m = $("#modal");
+  $("h3",m).textContent = title;
+  $(".content",m).innerHTML = content;
+  const foot = $(".foot",m); foot.innerHTML = "";
+  (actions||[]).forEach(a=>{
+    const b = document.createElement("button");
+    b.className = "btn" + (a.primary ? " primary" : "") + (a.danger ? " danger" : "");
+    b.textContent = a.label;
+    b.onclick = ()=>a.run(m);
+    foot.appendChild(b);
+  });
+  m.classList.add("on");
+  const first = $("input,select,textarea",m); if(first) first.focus();
+  return m;
+}
+const closeModal = ()=> $("#modal").classList.remove("on");
+$("#modal").addEventListener("click", e=>{ if(e.target.id==="modal") closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+
+/* ---------------- auth ---------------- */
+async function boot(){
+  const { data } = await sb.auth.getSession();
+  if(data.session) await enterApp(); else showLock();
+}
+function showLock(){
+  $("#lock").classList.remove("hidden");
+  $("#app").classList.remove("on");
+  $("#lock-pw").value = "";
+  setTimeout(()=>$("#lock-pw").focus(), 60);
+}
+async function enterApp(){
+  $("#lock").classList.add("hidden");
+  $("#app").classList.add("on");
+  await loadAll();
+  subscribeRealtime();
+  window.addEventListener("hashchange", route);
+  route();
+}
+$("#lock-pw").addEventListener("keydown", e=>{
+  if(e.key === "Enter"){ e.preventDefault(); $("#lock-form").requestSubmit(); }
+});
+$("#lock-form").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const btn = $("#lock-btn"), pw = $("#lock-pw").value;
+  const err = $("#lock-err");
+  btn.disabled = true; btn.textContent = "…"; err.textContent = "";
+  const { error } = await sb.auth.signInWithPassword({ email: STUDIO_EMAIL, password: pw });
+  btn.disabled = false; btn.textContent = "ENTER";
+  if(error){
+    err.textContent = "Access denied";
+    const i = $("#lock-pw");
+    i.classList.remove("shake"); void i.offsetWidth; i.classList.add("shake");
+    i.select();
+    return;
+  }
+  await enterApp();
+});
+$("#lockBtn").addEventListener("click", async ()=>{
+  await sb.auth.signOut();
+  state.ready = false;
+  showLock();
+});
+
+/* ---------------- data ---------------- */
+const TABLES = ["equipment","clients","technicians","quotes"];
+
+async function loadAll(){
+  const res = await Promise.all(TABLES.map(t => sb.from(t).select("*")));
+  res.forEach((r,i)=>{
+    if(r.error){ toast("Load failed", TABLES[i]+": "+r.error.message, true); return; }
+    state[TABLES[i]] = r.data || [];
+  });
+  state.ready = true;
+  updateCounts();
+}
+async function reloadTable(t){
+  const { data, error } = await sb.from(t).select("*");
+  if(error) return;
+  state[t] = data || [];
+  updateCounts();
+}
+function updateCounts(){
+  $("#c-eq").textContent = state.equipment.length || "";
+  $("#c-cl").textContent = state.clients.length || "";
+  $("#c-te").textContent = state.technicians.length || "";
+  $("#c-qu").textContent = state.quotes.length || "";
+}
+
+async function dbInsert(table,row){
+  const { data, error } = await sb.from(table).insert(row).select().single();
+  if(error){ toast("Save failed", error.message, true); return null; }
+  return data;
+}
+async function dbUpdate(table,id,patch){
+  const { data, error } = await sb.from(table).update(patch).eq("id",id).select().single();
+  if(error){ toast("Save failed", error.message, true); return null; }
+  return data;
+}
+async function dbDelete(table,id){
+  const { error } = await sb.from(table).delete().eq("id",id);
+  if(error){ toast("Delete failed", error.message, true); return false; }
+  return true;
+}
+
+/* ---------------- realtime ---------------- */
+function pulse(){
+  const s = $("#sync");
+  s.classList.add("pulse");
+  setTimeout(()=>s.classList.remove("pulse"), 550);
+}
+function subscribeRealtime(){
+  const ch = sb.channel("ss-sync");
+  TABLES.forEach(t=>{
+    ch.on("postgres_changes", { event:"*", schema:"public", table:t }, async ()=>{
+      await reloadTable(t);
+      pulse();
+      route(true);
+    });
+  });
+  ch.subscribe(status=>{
+    const s = $("#sync");
+    if(status === "SUBSCRIBED"){ s.classList.add("live"); $("span",s).textContent = "synced"; }
+    else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT"){ s.classList.remove("live"); $("span",s).textContent = "offline"; }
+  });
+}
+
+/* ---------------- business logic ---------------- */
+function equipAvailable(eqId,start,end,excludeQuoteId){
+  const item = state.equipment.find(e=>e.id===eqId);
+  if(!item) return 0;
+  const stock = num(item.qty);
+  if(!start || !end) return stock;
+  let booked = 0;
+  for(const q of state.quotes){
+    if(q.status === "Cancelled") continue;
+    if(excludeQuoteId && q.id === excludeQuoteId) continue;
+    if(!overlaps(q.start_date,q.end_date,start,end)) continue;
+    for(const l of (q.equipment_lines||[])) if(l.equipment_id === eqId) booked += num(l.qty);
+  }
+  return stock - booked;
+}
+function techConflict(techId,start,end,excludeQuoteId){
+  if(!start || !end) return null;
+  for(const q of state.quotes){
+    if(q.status === "Cancelled") continue;
+    if(excludeQuoteId && q.id === excludeQuoteId) continue;
+    if(!overlaps(q.start_date,q.end_date,start,end)) continue;
+    if((q.technician_lines||[]).some(l=>l.technician_id===techId)) return q;
+  }
+  return null;
+}
+/** Days on which stock is over-booked, across all non-cancelled quotes. */
+function conflictMap(){
+  const byDay = {};   // "YYYY-MM-DD" -> { eqId: qty }
+  for(const q of state.quotes){
+    if(q.status === "Cancelled") continue;
+    const days = dayCount(q.start_date,q.end_date,false);
+    for(let i=0;i<days;i++){
+      const d = new Date(Date.parse(q.start_date) + i*86400000).toISOString().slice(0,10);
+      byDay[d] = byDay[d] || {};
+      for(const l of (q.equipment_lines||[])) byDay[d][l.equipment_id] = (byDay[d][l.equipment_id]||0) + num(l.qty);
+    }
+  }
+  const bad = {};     // "YYYY-MM-DD" -> [names]
+  for(const [d,items] of Object.entries(byDay)){
+    for(const [eqId,qty] of Object.entries(items)){
+      const it = state.equipment.find(e=>e.id===eqId);
+      if(it && qty > num(it.qty)) (bad[d] = bad[d] || []).push(`${it.name} (${qty}/${it.qty})`);
+    }
+  }
+  return bad;
+}
+
+function computeQuote(q){
+  const days   = dayCount(q.start_date,q.end_date,q.include_setup_day);
+  const eq     = (q.equipment_lines||[]).map(l=>({ ...l, subtotal: num(l.qty)*num(l.price_per_day)*days }));
+  const tech   = (q.technician_lines||[]).map(l=>({ ...l, subtotal: num(l.days)*num(l.day_rate) }));
+  const eqSub  = eq.reduce((s,l)=>s+l.subtotal,0);
+  const techSub= tech.reduce((s,l)=>s+l.subtotal,0);
+  const gross  = eqSub + techSub;
+  const disc   = gross * num(q.discount_pct)/100;
+  const afterD = gross - disc;
+  const surch  = afterD * num(q.surcharge_pct)/100;
+  const afterS = afterD + surch;
+  const extras = (q.extras||[]).reduce((s,e)=>s+num(e.amount),0);
+  const base   = afterS + extras;
+
+  let inps=0, taxable=base, vat=0, grand=base, withholding=0, net=base;
+  if(q.tax_enabled){
+    inps    = base * 0.04;
+    taxable = base + inps;
+    vat     = taxable * 0.22;
+    grand   = taxable + vat;
+    withholding = q.withholding_enabled ? taxable * 0.20 : 0;
+    net     = grand - withholding;
+  }
+  return {days,eq,tech,eqSub,techSub,gross,disc,afterD,surch,afterS,extras,base,inps,taxable,vat,grand,withholding,net};
+}
+
+function nextQuoteNumber(){
+  const y = new Date().getFullYear(), p = `Q-${y}/`;
+  const nums = state.quotes
+    .filter(q=>typeof q.quote_number==="string" && q.quote_number.startsWith(p))
+    .map(q=>parseInt(q.quote_number.slice(p.length),10))
+    .filter(Number.isFinite);
+  return p + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,"0");
+}
+const clientName = id => state.clients.find(c=>c.id===id)?.company_name || "—";
+
+/* ---------------- router ---------------- */
+const ROUTES = { inventory:viewInventory, clients:viewClients, technicians:viewTechnicians,
+                 quote:viewQuote, quotes:viewQuotes, calendar:viewCalendar };
+
+function route(isRefresh){
+  if(!state.ready) return;
+  const raw = (location.hash || "#inventory").slice(1);
+  const [name,arg] = raw.split("/");
+  const fn = ROUTES[name] || viewInventory;
+  $$("#nav a").forEach(a=>a.classList.toggle("active", a.getAttribute("href") === "#"+(ROUTES[name]?name:"inventory")));
+  if(name !== "calendar") calendar = null;
+  fn(arg, !!isRefresh);
+}
+
+/* ============================================================
+   VIEW — INVENTORY
+   ============================================================ */
+let invFilter = { cat:"", start:"", end:"" };
+
+function viewInventory(){
+  const v = $("#view");
+  const items = state.equipment
+    .filter(e=>!invFilter.cat || e.category===invFilter.cat)
+    .sort((a,b)=>(a.category+a.name).localeCompare(b.category+b.name));
+
+  const rangeOn = invFilter.start && invFilter.end;
+
+  v.innerHTML = `
+    <div class="head">
+      <div><h1>Equipment Inventory</h1>
+        <div class="sub">${state.equipment.length} items${rangeOn?` · availability for ${dIT(invFilter.start)} → ${dIT(invFilter.end)}`:""}</div></div>
+      <button class="btn primary" id="add-eq">+ Add item</button>
+    </div>
+    <div class="card"><div class="body">
+      <div class="row">
+        <div><label>Category</label>
+          <select id="f-cat"><option value="">All</option>${CATEGORIES.map(c=>`<option ${invFilter.cat===c?"selected":""}>${c}</option>`).join("")}</select></div>
+        <div><label>Availability from</label><input type="date" id="f-start" value="${invFilter.start}"></div>
+        <div><label>to</label><input type="date" id="f-end" value="${invFilter.end}"></div>
+        <div style="align-self:flex-end"><button class="btn sm" id="f-clear">Clear dates</button></div>
+      </div>
+    </div></div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Name</th><th>Category</th><th class="num">Stock</th><th class="num">€ / day</th>
+          <th class="num">Available</th><th>Notes</th><th></th></tr></thead>
+        <tbody>${items.length ? items.map(e=>{
+          const av = rangeOn ? equipAvailable(e.id, invFilter.start, invFilter.end) : null;
+          const cls = av===null ? "" : (av<=0 ? "warn-txt" : (av<num(e.qty) ? "" : "ok-txt"));
+          return `<tr data-id="${e.id}">
+            <td>${esc(e.name)}</td>
+            <td><span class="tag">${esc(e.category)}</span></td>
+            <td class="num">${num(e.qty)}</td>
+            <td class="num">${money(e.price_per_day)}</td>
+            <td class="num ${cls}">${av===null ? '<span class="mut">set dates</span>' : `${av} of ${num(e.qty)}`}</td>
+            <td class="mut">${esc(e.notes||"")}</td>
+            <td class="num"><button class="btn sm e-edit">Edit</button> <button class="btn sm danger e-del">×</button></td>
+          </tr>`;}).join("") : `<tr><td colspan="7" class="empty">No equipment yet.</td></tr>`}
+        </tbody>
+      </table>
+    </div>`;
+
+  $("#f-cat").onchange   = e => { invFilter.cat = e.target.value; viewInventory(); };
+  $("#f-start").onchange = e => { invFilter.start = e.target.value; viewInventory(); };
+  $("#f-end").onchange   = e => { invFilter.end = e.target.value; viewInventory(); };
+  $("#f-clear").onclick  = () => { invFilter.start = invFilter.end = ""; viewInventory(); };
+  $("#add-eq").onclick   = () => equipModal(null);
+  $$(".e-edit",v).forEach(b=>b.onclick = e => equipModal(e.target.closest("tr").dataset.id));
+  $$(".e-del",v).forEach(b=>b.onclick = e => confirmDelete("equipment", e.target.closest("tr").dataset.id, "item"));
+}
+
+function equipModal(id){
+  const it = id ? state.equipment.find(e=>e.id===id) : null;
+  modal(it ? "Edit item" : "New item", `
+    <div class="field"><label>Name</label><input id="m-name" value="${esc(it?.name||"")}"></div>
+    <div class="grid3">
+      <div class="field"><label>Category</label><select id="m-cat">${CATEGORIES.map(c=>`<option ${it?.category===c?"selected":""}>${c}</option>`).join("")}</select></div>
+      <div class="field"><label>Stock qty</label><input type="number" min="0" step="1" id="m-qty" value="${it?num(it.qty):1}"></div>
+      <div class="field"><label>Price / day (€)</label><input type="number" min="0" step="0.01" id="m-price" value="${it?num(it.price_per_day):0}"></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="m-notes" rows="2">${esc(it?.notes||"")}</textarea></div>`,
+  [
+    { label:"Cancel", run:closeModal },
+    { label:it?"Save":"Create", primary:true, run: async ()=>{
+      const row = {
+        name: $("#m-name").value.trim(),
+        category: $("#m-cat").value,
+        qty: num($("#m-qty").value),
+        price_per_day: num($("#m-price").value),
+        notes: $("#m-notes").value.trim() || null
+      };
+      if(!row.name){ $("#m-name").classList.add("inv"); return; }
+      const saved = id ? await dbUpdate("equipment",id,row) : await dbInsert("equipment",row);
+      if(!saved) return;
+      closeModal(); await reloadTable("equipment"); viewInventory();
+      toast(id?"Item updated":"Item created", row.name);
+    }}
+  ]);
+}
+
+function confirmDelete(table,id,label){
+  modal(`Delete ${label}?`, `<p class="mut">This cannot be undone.</p>`, [
+    { label:"Cancel", run:closeModal },
+    { label:"Delete", danger:true, run: async ()=>{
+      if(await dbDelete(table,id)){ closeModal(); await reloadTable(table); route(); toast("Deleted",""); }
+    }}
+  ]);
+}
+
+/* ============================================================
+   VIEW — CLIENTS
+   ============================================================ */
+let clientSearch = "", clientOpen = null;
+
+function viewClients(){
+  const v = $("#view");
+  const q = clientSearch.toLowerCase();
+  const list = state.clients
+    .filter(c => !q || (c.company_name||"").toLowerCase().includes(q) || (c.vat_number||"").toLowerCase().includes(q))
+    .sort((a,b)=>(a.company_name||"").localeCompare(b.company_name||""));
+
+  v.innerHTML = `
+    <div class="head">
+      <div><h1>Clients</h1><div class="sub">${state.clients.length} in registry</div></div>
+      <div class="row">
+        <input id="c-search" placeholder="Search name or VAT…" value="${esc(clientSearch)}" style="width:230px">
+        <button class="btn primary" id="add-cl">+ Add client</button>
+      </div>
+    </div>
+    <div class="card"><table>
+      <thead><tr><th>Company / Name</th><th>VAT / Tax ID</th><th>Type</th><th>Contact</th><th class="num">Quotes</th><th></th></tr></thead>
+      <tbody>${list.length ? list.map(c=>{
+        const qs = state.quotes.filter(x=>x.client_id===c.id);
+        const open = clientOpen === c.id;
+        return `<tr data-id="${c.id}" class="${open?"exp":""}">
+            <td><a href="#" class="c-toggle">${esc(c.company_name)}</a></td>
+            <td class="mut">${esc(c.vat_number||"—")}</td>
+            <td><span class="tag">${esc(c.type||"—")}</span></td>
+            <td class="mut">${esc(c.contact_name||"")}${c.phone?" · "+esc(c.phone):""}</td>
+            <td class="num">${qs.length||"—"}</td>
+            <td class="num"><button class="btn sm c-edit">Edit</button> <button class="btn sm danger c-del">×</button></td>
+          </tr>` + (open ? `<tr class="exp"><td colspan="6">
+            <div style="padding:6px 0 10px">
+              <div class="mut" style="margin-bottom:8px">${esc(c.address||"No address")} · ${esc(c.email||"no email")}</div>
+              ${c.notes?`<div class="mut" style="margin-bottom:8px">${esc(c.notes)}</div>`:""}
+              ${qs.length ? `<table class="line-tbl"><thead><tr><th>Quote</th><th>Dates</th><th>Status</th><th class="num">Total</th></tr></thead>
+                <tbody>${qs.map(x=>`<tr><td><a href="#quote/${x.id}">${esc(x.quote_number)}</a></td>
+                  <td class="mut">${dIT(x.start_date)} → ${dIT(x.end_date)}</td>
+                  <td><span class="tag ${x.status==="Confirmed"?"teal":x.status==="Cancelled"?"red":"grey"}">${esc(x.status)}</span></td>
+                  <td class="num">${money(x.total)}</td></tr>`).join("")}</tbody></table>`
+                : `<div class="mut">No quotes yet.</div>`}
+            </div></td></tr>` : "");
+        }).join("") : `<tr><td colspan="6" class="empty">No clients yet.</td></tr>`}
+      </tbody></table></div>`;
+
+  const si = $("#c-search");
+  si.oninput = e => { clientSearch = e.target.value; const p = e.target.selectionStart; viewClients(); const n = $("#c-search"); n.focus(); n.setSelectionRange(p,p); };
+  $("#add-cl").onclick = () => clientModal(null);
+  $$(".c-toggle",v).forEach(a=>a.onclick = e=>{ e.preventDefault(); const id = e.target.closest("tr").dataset.id; clientOpen = clientOpen===id?null:id; viewClients(); });
+  $$(".c-edit",v).forEach(b=>b.onclick = e => clientModal(e.target.closest("tr").dataset.id));
+  $$(".c-del",v).forEach(b=>b.onclick = e => confirmDelete("clients", e.target.closest("tr").dataset.id, "client"));
+}
+
+function clientModal(id){
+  const c = id ? state.clients.find(x=>x.id===id) : null;
+  modal(c ? "Edit client" : "New client", `
+    <div class="field"><label>Company / Name</label><input id="m-name" value="${esc(c?.company_name||"")}"></div>
+    <div class="grid2">
+      <div class="field"><label>VAT / Tax ID</label><input id="m-vat" value="${esc(c?.vat_number||"")}"></div>
+      <div class="field"><label>Type</label><select id="m-type">${CLIENT_T.map(t=>`<option ${c?.type===t?"selected":""}>${t}</option>`).join("")}</select></div>
+    </div>
+    <div class="field"><label>Address</label><input id="m-addr" value="${esc(c?.address||"")}"></div>
+    <div class="grid3">
+      <div class="field"><label>Contact</label><input id="m-contact" value="${esc(c?.contact_name||"")}"></div>
+      <div class="field"><label>Phone</label><input id="m-phone" value="${esc(c?.phone||"")}"></div>
+      <div class="field"><label>Email</label><input id="m-email" value="${esc(c?.email||"")}"></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="m-notes" rows="2">${esc(c?.notes||"")}</textarea></div>`,
+  [
+    { label:"Cancel", run:closeModal },
+    { label:c?"Save":"Create", primary:true, run: async ()=>{
+      const row = {
+        company_name: $("#m-name").value.trim(), vat_number: $("#m-vat").value.trim()||null,
+        type: $("#m-type").value, address: $("#m-addr").value.trim()||null,
+        contact_name: $("#m-contact").value.trim()||null, phone: $("#m-phone").value.trim()||null,
+        email: $("#m-email").value.trim()||null, notes: $("#m-notes").value.trim()||null
+      };
+      if(!row.company_name){ $("#m-name").classList.add("inv"); return; }
+      const saved = id ? await dbUpdate("clients",id,row) : await dbInsert("clients",row);
+      if(!saved) return;
+      closeModal(); await reloadTable("clients"); route();
+      toast(id?"Client updated":"Client created", row.company_name);
+    }}
+  ]);
+}
+
+/* ============================================================
+   VIEW — TECHNICIANS
+   ============================================================ */
+let techOpen = null;
+
+function viewTechnicians(){
+  const v = $("#view");
+  const list = [...state.technicians].sort((a,b)=>(a.full_name||"").localeCompare(b.full_name||""));
+  const today = todayISO();
+
+  v.innerHTML = `
+    <div class="head">
+      <div><h1>Technicians</h1><div class="sub">${state.technicians.length} on the roster</div></div>
+      <button class="btn primary" id="add-te">+ Add technician</button>
+    </div>
+    <div class="card"><table>
+      <thead><tr><th>Name</th><th>Role</th><th>Contact</th><th class="num">€ / day</th><th class="num">Upcoming</th><th></th></tr></thead>
+      <tbody>${list.length ? list.map(t=>{
+        const jobs = state.quotes.filter(q=>q.status!=="Cancelled" && (q.technician_lines||[]).some(l=>l.technician_id===t.id))
+                                 .sort((a,b)=>(a.start_date||"").localeCompare(b.start_date||""));
+        const up = jobs.filter(q=>(q.end_date||"") >= today);
+        const open = techOpen === t.id;
+        return `<tr data-id="${t.id}" class="${open?"exp":""}">
+            <td><a href="#" class="t-toggle">${esc(t.full_name)}</a></td>
+            <td><span class="tag">${esc(t.role||"—")}</span></td>
+            <td class="mut">${esc(t.phone||"")}${t.email?" · "+esc(t.email):""}</td>
+            <td class="num">${money(t.day_rate)}</td>
+            <td class="num">${up.length||"—"}</td>
+            <td class="num"><button class="btn sm t-edit">Edit</button> <button class="btn sm danger t-del">×</button></td>
+          </tr>` + (open ? `<tr class="exp"><td colspan="6"><div style="padding:6px 0 10px">
+              ${t.notes?`<div class="mut" style="margin-bottom:8px">${esc(t.notes)}</div>`:""}
+              ${jobs.length ? `<table class="line-tbl"><thead><tr><th>Quote</th><th>Client</th><th>Dates</th><th class="num">Days</th></tr></thead>
+                <tbody>${jobs.map(q=>{
+                  const l = (q.technician_lines||[]).find(x=>x.technician_id===t.id);
+                  return `<tr><td><a href="#quote/${q.id}">${esc(q.quote_number)}</a></td>
+                    <td class="mut">${esc(clientName(q.client_id))}</td>
+                    <td class="mut">${dIT(q.start_date)} → ${dIT(q.end_date)}</td>
+                    <td class="num">${num(l?.days)}</td></tr>`;}).join("")}</tbody></table>`
+                : `<div class="mut">No assignments.</div>`}
+            </div></td></tr>` : "");
+        }).join("") : `<tr><td colspan="6" class="empty">No technicians yet.</td></tr>`}
+      </tbody></table></div>`;
+
+  $("#add-te").onclick = () => techModal(null);
+  $$(".t-toggle",v).forEach(a=>a.onclick = e=>{ e.preventDefault(); const id = e.target.closest("tr").dataset.id; techOpen = techOpen===id?null:id; viewTechnicians(); });
+  $$(".t-edit",v).forEach(b=>b.onclick = e => techModal(e.target.closest("tr").dataset.id));
+  $$(".t-del",v).forEach(b=>b.onclick = e => confirmDelete("technicians", e.target.closest("tr").dataset.id, "technician"));
+}
+
+function techModal(id){
+  const t = id ? state.technicians.find(x=>x.id===id) : null;
+  modal(t ? "Edit technician" : "New technician", `
+    <div class="grid2">
+      <div class="field"><label>Full name</label><input id="m-name" value="${esc(t?.full_name||"")}"></div>
+      <div class="field"><label>Role</label><select id="m-role">${ROLES.map(r=>`<option ${t?.role===r?"selected":""}>${r}</option>`).join("")}</select></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Phone</label><input id="m-phone" value="${esc(t?.phone||"")}"></div>
+      <div class="field"><label>Email</label><input id="m-email" value="${esc(t?.email||"")}"></div>
+      <div class="field"><label>Day rate (€)</label><input type="number" min="0" step="0.01" id="m-rate" value="${t?num(t.day_rate):0}"></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="m-notes" rows="2">${esc(t?.notes||"")}</textarea></div>`,
+  [
+    { label:"Cancel", run:closeModal },
+    { label:t?"Save":"Create", primary:true, run: async ()=>{
+      const row = {
+        full_name: $("#m-name").value.trim(), role: $("#m-role").value,
+        phone: $("#m-phone").value.trim()||null, email: $("#m-email").value.trim()||null,
+        day_rate: num($("#m-rate").value), notes: $("#m-notes").value.trim()||null
+      };
+      if(!row.full_name){ $("#m-name").classList.add("inv"); return; }
+      const saved = id ? await dbUpdate("technicians",id,row) : await dbInsert("technicians",row);
+      if(!saved) return;
+      closeModal(); await reloadTable("technicians"); route();
+      toast(id?"Technician updated":"Technician created", row.full_name);
+    }}
+  ]);
+}
+
+/* ============================================================
+   VIEW — QUOTE BUILDER
+   ============================================================ */
+let draftKey = null, unlocked = false;
+
+function newDraft(){
+  return { id:null, quote_number:nextQuoteNumber(), client_id:null, issue_date:todayISO(),
+           start_date:"", end_date:"", include_setup_day:false,
+           equipment_lines:[], technician_lines:[], extras:[],
+           discount_pct:0, surcharge_pct:0, tax_enabled:true, withholding_enabled:false,
+           status:"Draft", total:0 };
+}
+
+function viewQuote(id, isRefresh){
+  const key = id || "new";
+  if(draftKey !== key && !isRefresh){
+    if(id){
+      const q = state.quotes.find(x=>x.id===id);
+      if(!q){ location.hash = "#quotes"; return; }
+      draft = JSON.parse(JSON.stringify(q));
+      draft.equipment_lines  = draft.equipment_lines  || [];
+      draft.technician_lines = draft.technician_lines || [];
+      draft.extras           = draft.extras           || [];
+      unlocked = false;
+    } else { draft = newDraft(); unlocked = true; }
+    draftKey = key;
+  }
+  if(!draft){ draft = newDraft(); draftKey = "new"; unlocked = true; }
+  renderQuote();
+}
+
+const readOnly = () => draft.status === "Confirmed" && !unlocked;
+
+function renderQuote(){
+  const v = $("#view"), ro = readOnly(), c = computeQuote(draft);
+  const dis = ro ? "disabled" : "";
+
+  v.innerHTML = `
+    <div class="head">
+      <div><h1>${draft.id ? "Quote " + esc(draft.quote_number) : "New Quote"}</h1>
+        <div class="sub">${draft.id ? `${esc(draft.status)} · issued ${dIT(draft.issue_date)}` : "Draft — not saved yet"}</div></div>
+      <div class="row">
+        ${ro ? `<button class="btn" id="q-unlock">Unlock to edit</button>` : ""}
+        ${draft.id ? `<button class="btn" id="q-print">Export PDF</button><button class="btn" id="q-mail">Send email</button>` : ""}
+        <button class="btn primary" id="q-save" ${dis}>${draft.id ? "Save changes" : "Save quote"}</button>
+      </div>
+    </div>
+
+    <div class="card"><h2>HEADER</h2><div class="body"><div class="grid3">
+      <div class="field"><label>Quote number</label><input id="q-num" value="${esc(draft.quote_number)}" ${dis}></div>
+      <div class="field"><label>Issue date</label><input type="date" id="q-issue" value="${draft.issue_date||""}" ${dis}></div>
+      <div class="field"><label>Status</label><select id="q-status" ${dis}>${STATUSES.map(s=>`<option ${draft.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+    </div>
+    <div class="field"><label>Client</label>
+      <div class="row"><select id="q-client" style="flex:1" ${dis}>
+        <option value="">— select client —</option>
+        ${[...state.clients].sort((a,b)=>(a.company_name||"").localeCompare(b.company_name||""))
+          .map(cl=>`<option value="${cl.id}" ${draft.client_id===cl.id?"selected":""}>${esc(cl.company_name)}</option>`).join("")}
+      </select><button class="btn" id="q-newclient" ${dis}>+ New</button></div>
+    </div></div></div>
+
+    <div class="card"><h2>PERIOD</h2><div class="body">
+      <div class="grid3">
+        <div class="field"><label>Start date</label><input type="date" id="q-start" value="${draft.start_date||""}" ${dis}></div>
+        <div class="field"><label>End date</label><input type="date" id="q-end" value="${draft.end_date||""}" ${dis}></div>
+        <div class="field"><label>Billable days</label>
+          <div style="padding:7px 0;font-size:15px;font-weight:700;color:var(--teal)">${c.days}</div></div>
+      </div>
+      <label class="switch"><input type="checkbox" id="q-setup" ${draft.include_setup_day?"checked":""} ${dis}> Include travel / setup day (+1)</label>
+    </div></div>
+
+    <div class="card"><h2>EQUIPMENT</h2><div class="body">
+      <div id="eq-lines"></div>
+      ${ro?"":`<div class="row" style="margin-top:12px">
+        <select id="eq-pick" style="flex:1"><option value="">+ add equipment…</option>${eqOptions()}</select>
+      </div>`}
+    </div></div>
+
+    <div class="card"><h2>TECHNICIANS</h2><div class="body">
+      <div id="te-lines"></div>
+      ${ro?"":`<div class="row" style="margin-top:12px">
+        <select id="te-pick" style="flex:1"><option value="">+ add technician…</option>${teOptions()}</select>
+      </div>`}
+    </div></div>
+
+    <div class="card"><h2>ADJUSTMENTS</h2><div class="body">
+      <div class="grid2">
+        <div class="field"><label>Discount %</label><input type="number" step="0.01" id="q-disc" value="${num(draft.discount_pct)}" ${dis}></div>
+        <div class="field"><label>Surcharge %</label><input type="number" step="0.01" id="q-surch" value="${num(draft.surcharge_pct)}" ${dis}></div>
+      </div>
+      <div id="ex-lines"></div>
+      ${ro?"":`<button class="btn sm" id="ex-add" style="margin-top:8px">+ Extra line</button>`}
+    </div></div>
+
+    <div class="card"><h2>TOTALS</h2><div class="body">
+      <div class="row" style="margin-bottom:14px;gap:20px">
+        <label class="switch"><input type="checkbox" id="q-tax" ${draft.tax_enabled?"checked":""} ${dis}> Apply Italian tax</label>
+        <label class="switch"><input type="checkbox" id="q-wh" ${draft.withholding_enabled?"checked":""} ${draft.tax_enabled?"":"disabled"} ${dis}> Withholding tax 20%</label>
+      </div>
+      <div class="totals" id="totals"></div>
+    </div></div>`;
+
+  renderEqLines(); renderTeLines(); renderExtras(); renderTotals();
+
+  if(ro){ $("#q-unlock").onclick = ()=>{ unlocked = true; renderQuote(); }; }
+  if(draft.id){ $("#q-print").onclick = printQuote; $("#q-mail").onclick = mailQuote; }
+  $("#q-save").onclick = saveQuote;
+
+  const bind = (sel,ev,fn)=>{ const el=$(sel); if(el) el.addEventListener(ev,fn); };
+  bind("#q-num","input", e=>draft.quote_number = e.target.value);
+  bind("#q-issue","change", e=>draft.issue_date = e.target.value);
+  bind("#q-status","change", e=>{ draft.status = e.target.value; renderQuote(); });
+  bind("#q-client","change", e=>draft.client_id = e.target.value || null);
+  bind("#q-newclient","click", ()=>clientModal(null));
+  bind("#q-start","change", e=>{ draft.start_date = e.target.value; syncTechDays(); renderQuote(); });
+  bind("#q-end","change",   e=>{ draft.end_date   = e.target.value; syncTechDays(); renderQuote(); });
+  bind("#q-setup","change", e=>{ draft.include_setup_day = e.target.checked; syncTechDays(); renderQuote(); });
+  bind("#q-disc","input",  e=>{ draft.discount_pct  = num(e.target.value); renderTotals(); });
+  bind("#q-surch","input", e=>{ draft.surcharge_pct = num(e.target.value); renderTotals(); });
+  bind("#q-tax","change",  e=>{ draft.tax_enabled = e.target.checked; if(!e.target.checked) draft.withholding_enabled = false; renderQuote(); });
+  bind("#q-wh","change",   e=>{ draft.withholding_enabled = e.target.checked; renderTotals(); });
+  bind("#eq-pick","change", e=>{ if(e.target.value){ addEqLine(e.target.value); e.target.value=""; } });
+  bind("#te-pick","change", e=>{ if(e.target.value){ addTeLine(e.target.value); e.target.value=""; } });
+  bind("#ex-add","click", ()=>{ draft.extras.push({ id:uid(), label:"", amount:0 }); renderExtras(); renderTotals(); });
+}
+
+function eqOptions(){
+  return [...state.equipment].sort((a,b)=>(a.category+a.name).localeCompare(b.category+b.name))
+    .filter(e=>!draft.equipment_lines.some(l=>l.equipment_id===e.id))
+    .map(e=>{
+      const av = equipAvailable(e.id, draft.start_date, draft.end_date, draft.id);
+      return `<option value="${e.id}">${esc(e.name)} — ${esc(e.category)} — ${av} avail. — ${money(e.price_per_day)}/d</option>`;
+    }).join("");
+}
+function teOptions(){
+  return [...state.technicians].sort((a,b)=>(a.full_name||"").localeCompare(b.full_name||""))
+    .filter(t=>!draft.technician_lines.some(l=>l.technician_id===t.id))
+    .map(t=>{
+      const cf = techConflict(t.id, draft.start_date, draft.end_date, draft.id);
+      return `<option value="${t.id}">${esc(t.full_name)} — ${esc(t.role||"")}${cf?" — BUSY "+esc(cf.quote_number):""} — ${money(t.day_rate)}/d</option>`;
+    }).join("");
+}
+function addEqLine(eqId){
+  const e = state.equipment.find(x=>x.id===eqId); if(!e) return;
+  draft.equipment_lines.push({ id:uid(), equipment_id:e.id, name:e.name, qty:1, price_per_day:num(e.price_per_day) });
+  renderQuote();
+}
+function addTeLine(tId){
+  const t = state.technicians.find(x=>x.id===tId); if(!t) return;
+  const d = dayCount(draft.start_date,draft.end_date,draft.include_setup_day);
+  draft.technician_lines.push({ id:uid(), technician_id:t.id, name:t.full_name, role:t.role, days:d||1, day_rate:num(t.day_rate) });
+  renderQuote();
+}
+function syncTechDays(){
+  const d = dayCount(draft.start_date,draft.end_date,draft.include_setup_day);
+  if(d) draft.technician_lines.forEach(l=>l.days = d);
+}
+
+function renderEqLines(){
+  const box = $("#eq-lines"), ro = readOnly();
+  const c = computeQuote(draft);
+  if(!draft.equipment_lines.length){ box.innerHTML = `<div class="mut">No equipment on this quote.</div>`; return; }
+  box.innerHTML = `<table class="line-tbl">
+    <thead><tr><th>Item</th><th class="num" style="width:90px">Qty</th><th class="num" style="width:100px">Avail.</th>
+      <th class="num" style="width:120px">€ / day</th><th class="num" style="width:120px">Subtotal</th><th style="width:34px"></th></tr></thead>
+    <tbody>${draft.equipment_lines.map((l,i)=>{
+      const av = equipAvailable(l.equipment_id, draft.start_date, draft.end_date, draft.id);
+      const over = num(l.qty) > av;
+      return `<tr data-i="${i}">
+        <td>${esc(l.name)}</td>
+        <td><input type="number" min="0" step="1" class="eq-qty ${over?"inv":""}" value="${num(l.qty)}" ${ro?"disabled":""}></td>
+        <td class="num ${over?"warn-txt":"mut"}">${av}${over?" ⚠":""}</td>
+        <td><input type="number" min="0" step="0.01" class="eq-price" value="${num(l.price_per_day)}" ${ro?"disabled":""}></td>
+        <td class="num eq-sub">${money(c.eq[i].subtotal)}</td>
+        <td class="num">${ro?"":`<button class="btn sm danger eq-del">×</button>`}</td>
+      </tr>`;}).join("")}</tbody></table>`;
+
+  $$(".eq-qty",box).forEach(inp=>inp.oninput = e=>{ draft.equipment_lines[+e.target.closest("tr").dataset.i].qty = num(e.target.value); renderTotals(); refreshEqCells(); });
+  $$(".eq-price",box).forEach(inp=>inp.oninput = e=>{ draft.equipment_lines[+e.target.closest("tr").dataset.i].price_per_day = num(e.target.value); renderTotals(); refreshEqCells(); });
+  $$(".eq-del",box).forEach(b=>b.onclick = e=>{ draft.equipment_lines.splice(+e.target.closest("tr").dataset.i,1); renderQuote(); });
+}
+function refreshEqCells(){
+  const c = computeQuote(draft);
+  $$("#eq-lines tbody tr").forEach((tr,i)=>{
+    const l = draft.equipment_lines[i];
+    const av = equipAvailable(l.equipment_id, draft.start_date, draft.end_date, draft.id);
+    const over = num(l.qty) > av;
+    $(".eq-sub",tr).textContent = money(c.eq[i].subtotal);
+    const cell = tr.children[2];
+    cell.textContent = av + (over ? " ⚠" : "");
+    cell.className = "num " + (over ? "warn-txt" : "mut");
+    $(".eq-qty",tr).classList.toggle("inv", over);
+  });
+}
+
+function renderTeLines(){
+  const box = $("#te-lines"), ro = readOnly();
+  const c = computeQuote(draft);
+  if(!draft.technician_lines.length){ box.innerHTML = `<div class="mut">No technicians on this quote.</div>`; return; }
+  box.innerHTML = `<table class="line-tbl">
+    <thead><tr><th>Name</th><th>Role</th><th class="num" style="width:90px">Days</th>
+      <th class="num" style="width:120px">€ / day</th><th class="num" style="width:120px">Subtotal</th><th style="width:34px"></th></tr></thead>
+    <tbody>${draft.technician_lines.map((l,i)=>{
+      const cf = techConflict(l.technician_id, draft.start_date, draft.end_date, draft.id);
+      return `<tr data-i="${i}">
+        <td>${esc(l.name)}${cf?` <span class="tag red">busy ${esc(cf.quote_number)}</span>`:""}</td>
+        <td class="mut">${esc(l.role||"")}</td>
+        <td><input type="number" min="0" step="1" class="te-days" value="${num(l.days)}" ${ro?"disabled":""}></td>
+        <td><input type="number" min="0" step="0.01" class="te-rate" value="${num(l.day_rate)}" ${ro?"disabled":""}></td>
+        <td class="num te-sub">${money(c.tech[i].subtotal)}</td>
+        <td class="num">${ro?"":`<button class="btn sm danger te-del">×</button>`}</td>
+      </tr>`;}).join("")}</tbody></table>`;
+
+  const upd = ()=>{ const cc = computeQuote(draft); $$("#te-lines .te-sub").forEach((td,i)=>td.textContent = money(cc.tech[i].subtotal)); renderTotals(); };
+  $$(".te-days",box).forEach(inp=>inp.oninput = e=>{ draft.technician_lines[+e.target.closest("tr").dataset.i].days = num(e.target.value); upd(); });
+  $$(".te-rate",box).forEach(inp=>inp.oninput = e=>{ draft.technician_lines[+e.target.closest("tr").dataset.i].day_rate = num(e.target.value); upd(); });
+  $$(".te-del",box).forEach(b=>b.onclick = e=>{ draft.technician_lines.splice(+e.target.closest("tr").dataset.i,1); renderQuote(); });
+}
+
+function renderExtras(){
+  const box = $("#ex-lines"), ro = readOnly();
+  if(!draft.extras.length){ box.innerHTML = ""; return; }
+  box.innerHTML = `<table class="line-tbl"><thead><tr><th>Extra line</th><th class="num" style="width:140px">Amount</th><th style="width:34px"></th></tr></thead>
+    <tbody>${draft.extras.map((x,i)=>`<tr data-i="${i}">
+      <td><input class="ex-label" value="${esc(x.label||"")}" placeholder="Description" ${ro?"disabled":""}></td>
+      <td><input type="number" step="0.01" class="ex-amt" value="${num(x.amount)}" ${ro?"disabled":""}></td>
+      <td class="num">${ro?"":`<button class="btn sm danger ex-del">×</button>`}</td></tr>`).join("")}</tbody></table>`;
+  $$(".ex-label",box).forEach(i=>i.oninput = e=>draft.extras[+e.target.closest("tr").dataset.i].label = e.target.value);
+  $$(".ex-amt",box).forEach(i=>i.oninput = e=>{ draft.extras[+e.target.closest("tr").dataset.i].amount = num(e.target.value); renderTotals(); });
+  $$(".ex-del",box).forEach(b=>b.onclick = e=>{ draft.extras.splice(+e.target.closest("tr").dataset.i,1); renderExtras(); renderTotals(); });
+}
+
+function renderTotals(){
+  const c = computeQuote(draft);
+  const line = (l,v,cls="") => `<div class="t ${cls}"><span>${l}</span><span>${money(v)}</span></div>`;
+  let h = "";
+  h += line(`Equipment (${c.days} day${c.days===1?"":"s"})`, c.eqSub, "sub");
+  h += line("Technicians", c.techSub, "sub");
+  h += line("Subtotal", c.gross);
+  if(num(draft.discount_pct))  h += line(`Discount ${num(draft.discount_pct)}%`,  -c.disc,  "neg");
+  if(num(draft.surcharge_pct)) h += line(`Surcharge ${num(draft.surcharge_pct)}%`, c.surch);
+  if(c.extras)                 h += line("Extras", c.extras);
+  if(draft.tax_enabled){
+    h += line("Taxable base", c.base, "sub");
+    h += line("INPS 4%", c.inps, "sub");
+    h += line("Total taxable", c.taxable);
+    h += line("VAT 22%", c.vat, "sub");
+    h += line("Grand total", c.grand, draft.withholding_enabled ? "" : "big");
+    if(draft.withholding_enabled){
+      h += line("Withholding tax 20%", -c.withholding, "neg");
+      h += line("Net payable", c.net, "big");
+    }
+  } else {
+    h += line("Total", c.base, "big");
+  }
+  $("#totals").innerHTML = h;
+}
+
+async function saveQuote(){
+  if(!draft.client_id){ toast("Client required","Select a client before saving.",true); return; }
+  if(!draft.start_date || !draft.end_date){ toast("Dates required","Set start and end dates.",true); return; }
+  if(draft.end_date < draft.start_date){ toast("Invalid period","End date is before start date.",true); return; }
+
+  const c = computeQuote(draft);
+  const row = {
+    quote_number: draft.quote_number, client_id: draft.client_id, issue_date: draft.issue_date,
+    start_date: draft.start_date, end_date: draft.end_date, include_setup_day: !!draft.include_setup_day,
+    equipment_lines: draft.equipment_lines, technician_lines: draft.technician_lines, extras: draft.extras,
+    discount_pct: num(draft.discount_pct), surcharge_pct: num(draft.surcharge_pct),
+    tax_enabled: !!draft.tax_enabled, withholding_enabled: !!draft.withholding_enabled,
+    status: draft.status, total: Math.round((draft.tax_enabled ? c.net : c.base) * 100) / 100
+  };
+
+  const btn = $("#q-save"); btn.disabled = true; btn.textContent = "Saving…";
+  let saved;
+  if(draft.id){
+    saved = await dbUpdate("quotes", draft.id, row);
+  } else {
+    saved = await sb.from("quotes").insert(row).select().single()
+      .then(r=>r.error ? Promise.reject(r.error) : r.data)
+      .catch(async err=>{
+        if(err.code === "23505"){                    // quote_number taken — retry once
+          await reloadTable("quotes");
+          row.quote_number = nextQuoteNumber();
+          const r2 = await sb.from("quotes").insert(row).select().single();
+          if(r2.error){ toast("Save failed", r2.error.message, true); return null; }
+          toast("Number reassigned", "Saved as " + row.quote_number);
+          return r2.data;
+        }
+        toast("Save failed", err.message, true); return null;
+      });
+  }
+  btn.disabled = false; btn.textContent = draft.id ? "Save changes" : "Save quote";
+  if(!saved) return;
+
+  await reloadTable("quotes");
+  draft = JSON.parse(JSON.stringify(saved));
+  draftKey = saved.id; unlocked = false;
+  if(location.hash !== "#quote/"+saved.id) { location.hash = "#quote/"+saved.id; } else { renderQuote(); }
+  toast("Quote saved", saved.quote_number + " · " + money(saved.total));
+}
+
+/* ---------------- print / email ---------------- */
+function printQuote(){
+  const c = computeQuote(draft);
+  const cl = state.clients.find(x=>x.id===draft.client_id);
+  const row = (l,v,cls="") => `<div class="t ${cls}"><span>${l}</span><span>${money(v)}</span></div>`;
+  let tot = "";
+  tot += row("Subtotal", c.gross);
+  if(num(draft.discount_pct))  tot += row(`Discount ${num(draft.discount_pct)}%`, -c.disc);
+  if(num(draft.surcharge_pct)) tot += row(`Surcharge ${num(draft.surcharge_pct)}%`, c.surch);
+  if(c.extras)                 tot += row("Extras", c.extras);
+  if(draft.tax_enabled){
+    tot += row("INPS 4%", c.inps);
+    tot += row("Total taxable", c.taxable);
+    tot += row("VAT 22%", c.vat);
+    tot += row("Grand total", c.grand, draft.withholding_enabled ? "" : "big");
+    if(draft.withholding_enabled){ tot += row("Withholding 20%", -c.withholding); tot += row("Net payable", c.net, "big"); }
+  } else tot += row("Total", c.base, "big");
+
+  $("#print-area").innerHTML = `
+    <div class="p-head">
+      <div>
+        <svg class="p-logo" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="75" fill="none" stroke="#4abcbc" stroke-width="7"/>
+          <circle cx="80" cy="80" r="70" fill="#000"/>
+          <path d="M112 78 L124 88 L124 112 L112 102 Z" fill="#4abcbc"/>
+        <path d="M88 44 C106 60 106 86 94 102" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round"/>
+        <path d="M94 100 C82 118 62 120 62 133 C62 145 78 147 84 137" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+        <path d="M104 60 L118 70 L103 80 Z" fill="#fff"/>
+        <path d="M72 20 L93 31 L91 53 L69 49 Z" fill="#fff"/>
+        <path d="M70 43 L31 71 L73 59 Z" fill="#fff"/>
+        <path d="M73 22 L77 6 L85 27 Z" fill="#fff"/>
+        <path d="M85 27 L95 13 L94 33 Z" fill="#fff"/>
+        <circle cx="81" cy="37" r="3.4" fill="#000"/>
+        </svg>
+        <div style="margin-top:6px"><b>SEAHORSE STUDIO</b><br><span style="color:#555">Audio &amp; Lighting Rental</span></div>
+      </div>
+      <div style="text-align:right">
+        <h2>QUOTE ${esc(draft.quote_number)}</h2>
+        <div>Issued ${dIT(draft.issue_date)}</div>
+        <div>Period ${dIT(draft.start_date)} → ${dIT(draft.end_date)} (${c.days} days)</div>
+      </div>
+    </div>
+    <div class="p-sec">CLIENT</div>
+    <div><b>${esc(cl?.company_name||"—")}</b><br>${esc(cl?.address||"")}<br>
+      ${cl?.vat_number?"VAT "+esc(cl.vat_number)+"<br>":""}${esc(cl?.contact_name||"")} ${esc(cl?.email||"")}</div>
+    ${c.eq.length?`<div class="p-sec">EQUIPMENT</div>
+      <table><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">€/day</th><th style="text-align:right">Days</th><th style="text-align:right">Subtotal</th></tr></thead>
+      <tbody>${c.eq.map(l=>`<tr><td>${esc(l.name)}</td><td style="text-align:right">${num(l.qty)}</td>
+        <td style="text-align:right">${money(l.price_per_day)}</td><td style="text-align:right">${c.days}</td>
+        <td style="text-align:right">${money(l.subtotal)}</td></tr>`).join("")}</tbody></table>`:""}
+    ${c.tech.length?`<div class="p-sec">TECHNICAL STAFF</div>
+      <table><thead><tr><th>Name</th><th>Role</th><th style="text-align:right">Days</th><th style="text-align:right">€/day</th><th style="text-align:right">Subtotal</th></tr></thead>
+      <tbody>${c.tech.map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.role||"")}</td><td style="text-align:right">${num(l.days)}</td>
+        <td style="text-align:right">${money(l.day_rate)}</td><td style="text-align:right">${money(l.subtotal)}</td></tr>`).join("")}</tbody></table>`:""}
+    ${draft.extras.length?`<div class="p-sec">EXTRAS</div><table><tbody>${draft.extras.map(x=>
+        `<tr><td>${esc(x.label||"Extra")}</td><td style="text-align:right">${money(x.amount)}</td></tr>`).join("")}</tbody></table>`:""}
+    <div class="p-tot">${tot}</div>`;
+  window.print();
+}
+
+function mailQuote(){
+  const c = computeQuote(draft);
+  const cl = state.clients.find(x=>x.id===draft.client_id);
+  const L = [];
+  L.push(`Quote ${draft.quote_number}`, `Client: ${cl?.company_name||"—"}`,
+         `Period: ${dIT(draft.start_date)} - ${dIT(draft.end_date)} (${c.days} days)`, "");
+  if(c.eq.length){ L.push("EQUIPMENT"); c.eq.forEach(l=>L.push(`  ${l.name} x${num(l.qty)} @ ${money(l.price_per_day)}/day = ${money(l.subtotal)}`)); L.push(""); }
+  if(c.tech.length){ L.push("TECHNICAL STAFF"); c.tech.forEach(l=>L.push(`  ${l.name} (${l.role||""}) ${num(l.days)}d @ ${money(l.day_rate)}/day = ${money(l.subtotal)}`)); L.push(""); }
+  if(draft.extras.length){ L.push("EXTRAS"); draft.extras.forEach(x=>L.push(`  ${x.label||"Extra"}: ${money(x.amount)}`)); L.push(""); }
+  L.push(`Subtotal: ${money(c.gross)}`);
+  if(num(draft.discount_pct))  L.push(`Discount ${num(draft.discount_pct)}%: -${money(c.disc)}`);
+  if(num(draft.surcharge_pct)) L.push(`Surcharge ${num(draft.surcharge_pct)}%: ${money(c.surch)}`);
+  if(draft.tax_enabled){
+    L.push(`INPS 4%: ${money(c.inps)}`, `Total taxable: ${money(c.taxable)}`, `VAT 22%: ${money(c.vat)}`, `Grand total: ${money(c.grand)}`);
+    if(draft.withholding_enabled) L.push(`Withholding 20%: -${money(c.withholding)}`, `NET PAYABLE: ${money(c.net)}`);
+  } else L.push(`TOTAL: ${money(c.base)}`);
+  L.push("", "Seahorse Studio — Audio & Lighting Rental");
+  location.href = `mailto:${encodeURIComponent(cl?.email||"")}?subject=${encodeURIComponent("Quote "+draft.quote_number+" — Seahorse Studio")}&body=${encodeURIComponent(L.join("\n"))}`;
+}
+
+/* ============================================================
+   VIEW — QUOTES LIST
+   ============================================================ */
+function viewQuotes(){
+  const v = $("#view");
+  const list = [...state.quotes].sort((a,b)=>(b.start_date||"").localeCompare(a.start_date||""));
+  v.innerHTML = `
+    <div class="head">
+      <div><h1>Quotes</h1><div class="sub">${list.length} saved</div></div>
+      <a class="btn primary" href="#quote">+ New quote</a>
+    </div>
+    <div class="card"><table>
+      <thead><tr><th>Quote</th><th>Client</th><th>Period</th><th>Status</th><th class="num">Total</th><th></th></tr></thead>
+      <tbody>${list.length ? list.map(q=>`<tr data-id="${q.id}">
+        <td><a href="#quote/${q.id}">${esc(q.quote_number)}</a></td>
+        <td>${esc(clientName(q.client_id))}</td>
+        <td class="mut">${dIT(q.start_date)} → ${dIT(q.end_date)}</td>
+        <td><select class="q-st" style="width:130px">${STATUSES.map(s=>`<option ${q.status===s?"selected":""}>${s}</option>`).join("")}</select></td>
+        <td class="num">${money(q.total)}</td>
+        <td class="num"><button class="btn sm q-dup">Duplicate</button> <button class="btn sm danger q-del">×</button></td>
+      </tr>`).join("") : `<tr><td colspan="6" class="empty">No quotes yet.</td></tr>`}
+      </tbody></table></div>`;
+
+  $$(".q-st",v).forEach(s=>s.onchange = async e=>{
+    const id = e.target.closest("tr").dataset.id;
+    if(await dbUpdate("quotes",id,{ status:e.target.value })){ await reloadTable("quotes"); toast("Status updated", e.target.value); }
+  });
+  $$(".q-dup",v).forEach(b=>b.onclick = async e=>{
+    const q = state.quotes.find(x=>x.id===e.target.closest("tr").dataset.id);
+    const copy = JSON.parse(JSON.stringify(q));
+    delete copy.id; delete copy.created_at;
+    copy.quote_number = nextQuoteNumber(); copy.status = "Draft"; copy.issue_date = todayISO();
+    const saved = await dbInsert("quotes",copy);
+    if(saved){ await reloadTable("quotes"); viewQuotes(); toast("Duplicated", saved.quote_number); }
+  });
+  $$(".q-del",v).forEach(b=>b.onclick = e => confirmDelete("quotes", e.target.closest("tr").dataset.id, "quote"));
+}
+
+/* ============================================================
+   VIEW — CALENDAR
+   ============================================================ */
+function viewCalendar(){
+  const v = $("#view");
+  if(!calFilters.init){
+    state.technicians.forEach(t=>calFilters.techs.add(t.id));
+    CATEGORIES.forEach(c=>calFilters.cats.add(c));
+    calFilters.init = true;
+  }
+  v.innerHTML = `
+    <div class="head"><div><h1>Calendar</h1><div class="sub">Equipment and staff bookings</div></div></div>
+    <div id="cal-wrap">
+      <div id="cal-filters">
+        <h4>TECHNICIANS</h4>
+        ${state.technicians.length ? state.technicians.map(t=>
+          `<label><input type="checkbox" class="f-te" value="${t.id}" ${calFilters.techs.has(t.id)?"checked":""}>${esc(t.full_name)}</label>`).join("")
+          : `<div class="mut" style="font-size:12px">None</div>`}
+        <h4>EQUIPMENT CATEGORY</h4>
+        ${CATEGORIES.map(c=>`<label><input type="checkbox" class="f-cat" value="${c}" ${calFilters.cats.has(c)?"checked":""}>${c}</label>`).join("")}
+        <div style="margin-top:14px"><button class="btn sm" id="f-all">Select all</button></div>
+      </div>
+      <div id="calendar"></div>
+    </div>`;
+
+  $$(".f-te",v).forEach(cb=>cb.onchange = e=>{ e.target.checked ? calFilters.techs.add(e.target.value) : calFilters.techs.delete(e.target.value); renderCal(); });
+  $$(".f-cat",v).forEach(cb=>cb.onchange = e=>{ e.target.checked ? calFilters.cats.add(e.target.value) : calFilters.cats.delete(e.target.value); renderCal(); });
+  $("#f-all").onclick = ()=>{ state.technicians.forEach(t=>calFilters.techs.add(t.id)); CATEGORIES.forEach(c=>calFilters.cats.add(c)); viewCalendar(); };
+  renderCal();
+}
+
+function calEvents(){
+  const bad = conflictMap();
+  const catOf = id => state.equipment.find(e=>e.id===id)?.category;
+  return state.quotes.filter(q=>{
+    if(!q.start_date || !q.end_date) return false;
+    const techMatch = (q.technician_lines||[]).some(l=>calFilters.techs.has(l.technician_id));
+    const catMatch  = (q.equipment_lines||[]).some(l=>calFilters.cats.has(catOf(l.equipment_id)));
+    const empty = !(q.technician_lines||[]).length && !(q.equipment_lines||[]).length;
+    return techMatch || catMatch || empty;
+  }).map(q=>{
+    const days = dayCount(q.start_date,q.end_date,false);
+    let conflict = false;
+    for(let i=0;i<days;i++){
+      const d = new Date(Date.parse(q.start_date)+i*86400000).toISOString().slice(0,10);
+      if(bad[d]){ conflict = true; break; }
+    }
+    const end = new Date(Date.parse(q.end_date)+86400000).toISOString().slice(0,10);  // FullCalendar end is exclusive
+    const colour = q.status==="Cancelled" ? "#666" : (conflict ? "#ef4444" : "#4abcbc");
+    return {
+      id:q.id, title:`${clientName(q.client_id)} — ${q.quote_number}${conflict?" ⚠":""}`,
+      start:q.start_date, end, backgroundColor:colour, textColor:"#04201f",
+      extendedProps:{ quote:q, conflict }
+    };
+  });
+}
+
+function renderCal(){
+  const el = $("#calendar"); if(!el) return;
+  if(calendar){ calendar.destroy(); calendar = null; }
+  calendar = new FullCalendar.Calendar(el, {
+    initialView:"dayGridMonth", height:"auto", firstDay:1,
+    headerToolbar:{ left:"prev,next today", center:"title", right:"" },
+    events: calEvents(),
+    eventClick(info){ quotePopover(info.event.extendedProps.quote, info.event.extendedProps.conflict); }
+  });
+  calendar.render();
+}
+
+function quotePopover(q, conflict){
+  const c = computeQuote(q);
+  const bad = conflictMap();
+  const days = dayCount(q.start_date,q.end_date,false);
+  const issues = new Set();
+  for(let i=0;i<days;i++){
+    const d = new Date(Date.parse(q.start_date)+i*86400000).toISOString().slice(0,10);
+    (bad[d]||[]).forEach(x=>issues.add(x));
+  }
+  modal(`${q.quote_number} — ${clientName(q.client_id)}`, `
+    <div class="row" style="margin-bottom:12px">
+      <span class="tag ${q.status==="Confirmed"?"teal":q.status==="Cancelled"?"red":"grey"}">${esc(q.status)}</span>
+      <span class="mut">${dIT(q.start_date)} → ${dIT(q.end_date)} · ${c.days} days</span>
+    </div>
+    ${conflict && issues.size ? `<div class="card" style="border-color:#7f1d1d"><div class="body">
+      <b class="warn-txt">Over-booked</b><div class="mut" style="margin-top:5px">${[...issues].map(esc).join("<br>")}</div></div></div>` : ""}
+    <div class="p-sec mut" style="font-size:10px;letter-spacing:.14em;margin-bottom:6px">EQUIPMENT</div>
+    <div class="mut" style="margin-bottom:12px">${c.eq.length ? c.eq.map(l=>`${esc(l.name)} ×${num(l.qty)}`).join(" · ") : "none"}</div>
+    <div class="p-sec mut" style="font-size:10px;letter-spacing:.14em;margin-bottom:6px">TECHNICIANS</div>
+    <div class="mut" style="margin-bottom:12px">${c.tech.length ? c.tech.map(l=>esc(l.name)).join(" · ") : "none"}</div>
+    <div style="font-size:16px;font-weight:700;color:var(--teal)">${money(q.total)}</div>`,
+  [
+    { label:"Close", run:closeModal },
+    { label:"Open quote", primary:true, run:()=>{ closeModal(); location.hash = "#quote/"+q.id; } }
+  ]);
+}
+
+/* ---------------- go ---------------- */
+boot();
+</script>
+</body>
+</html>
