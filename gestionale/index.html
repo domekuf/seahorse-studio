@@ -299,9 +299,12 @@ tbody tr.exp{background:var(--surface2)}
   .card tr.exp>td{display:block;padding:12px}
   .card tr.exp>td::before{content:none}
 
+  /* 16px is the threshold below which iOS zooms the page on focus */
+  input,select,textarea{font-size:16px}
+
   /* modal fills the phone screen */
   #modal{padding:0;align-items:stretch}
-  #modal .box{max-width:none;border-radius:0;border:none;display:flex;flex-direction:column;min-height:100%}
+  #modal .box{max-width:none;border-radius:0;border:none;display:flex;flex-direction:column;min-height:100dvh}
   #modal .box .content{flex:1}
   #modal .box .foot{position:sticky;bottom:0;background:var(--surface)}
   #modal .box .foot .btn{flex:1;padding:11px}
@@ -380,7 +383,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const state = { equipment:[], clients:[], technicians:[], quotes:[], ready:false };
 let draft = null;          // quote currently being edited
 let calendar = null;       // FullCalendar instance
-let calFilters = { techs:new Set(), cats:new Set(), init:false };
+let calFilters = { techs:new Set(), cats:new Set(), seen:new Set(), init:false };
 
 /* ---------------- helpers ---------------- */
 const $  = (s,r=document)=>r.querySelector(s);
@@ -422,7 +425,8 @@ function modal(title, content, actions){
     foot.appendChild(b);
   });
   m.classList.add("on");
-  const first = $("input,select,textarea",m); if(first) first.focus();
+  // on a phone, autofocus opens the keyboard over the form before it can be read
+  if(window.innerWidth > 820){ const first = $("input,select,textarea",m); if(first) first.focus(); }
   return m;
 }
 /* ---------------- mobile drawer ---------------- */
@@ -1354,11 +1358,11 @@ function viewQuotes(){
    ============================================================ */
 function viewCalendar(){
   const v = $("#view");
-  if(!calFilters.init){
-    state.technicians.forEach(t=>calFilters.techs.add(t.id));
-    CATEGORIES.forEach(c=>calFilters.cats.add(c));
-    calFilters.init = true;
-  }
+  state.technicians.forEach(t=>{                 // newly added staff start ticked
+    if(calFilters.seen.has(t.id)) return;
+    calFilters.seen.add(t.id); calFilters.techs.add(t.id);
+  });
+  if(!calFilters.init){ CATEGORIES.forEach(c=>calFilters.cats.add(c)); calFilters.init = true; }
   v.innerHTML = `
     <div class="head"><div><h1>Calendar</h1><div class="sub">Equipment and staff bookings</div></div></div>
     <div id="cal-wrap">
@@ -1370,14 +1374,18 @@ function viewCalendar(){
           : `<div class="mut" style="font-size:13px">None</div>`}
         <h4>EQUIPMENT CATEGORY</h4>
         ${CATEGORIES.map(c=>`<label><input type="checkbox" class="f-cat" value="${c}" ${calFilters.cats.has(c)?"checked":""}>${c}</label>`).join("")}
-        <div style="margin-top:14px"><button class="btn sm" id="f-all">Select all</button></div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn sm" id="f-all">Select all</button>
+          <button class="btn sm" id="f-none">Clear all</button>
+        </div>
       </details>
       <div id="calendar"></div>
     </div>`;
 
   $$(".f-te",v).forEach(cb=>cb.onchange = e=>{ e.target.checked ? calFilters.techs.add(e.target.value) : calFilters.techs.delete(e.target.value); renderCal(); });
   $$(".f-cat",v).forEach(cb=>cb.onchange = e=>{ e.target.checked ? calFilters.cats.add(e.target.value) : calFilters.cats.delete(e.target.value); renderCal(); });
-  $("#f-all").onclick = ()=>{ state.technicians.forEach(t=>calFilters.techs.add(t.id)); CATEGORIES.forEach(c=>calFilters.cats.add(c)); viewCalendar(); };
+  $("#f-all").onclick  = ()=>{ state.technicians.forEach(t=>calFilters.techs.add(t.id)); CATEGORIES.forEach(c=>calFilters.cats.add(c)); viewCalendar(); };
+  $("#f-none").onclick = ()=>{ calFilters.techs.clear(); calFilters.cats.clear(); viewCalendar(); };
   renderCal();
 }
 
@@ -1386,10 +1394,17 @@ function calEvents(){
   const catOf = id => state.equipment.find(e=>e.id===id)?.category;
   return state.quotes.filter(q=>{
     if(!q.start_date || !q.end_date) return false;
-    const techMatch = (q.technician_lines||[]).some(l=>calFilters.techs.has(l.technician_id));
-    const catMatch  = (q.equipment_lines||[]).some(l=>calFilters.cats.has(catOf(l.equipment_id)));
-    const empty = !(q.technician_lines||[]).length && !(q.equipment_lines||[]).length;
-    return techMatch || catMatch || empty;
+    const techLines = q.technician_lines || [];
+    const eqLines   = q.equipment_lines   || [];
+    // a fully ticked list constrains nothing, and a quote with no lines of a
+    // given kind is not constrained by that list either
+    // a list is filtering only when it is partly ticked: all ticked or none
+    // ticked both mean "this list is not narrowing anything"
+    const allTechs = !calFilters.techs.size || calFilters.techs.size >= state.technicians.length;
+    const allCats  = !calFilters.cats.size  || calFilters.cats.size  >= CATEGORIES.length;
+    const techPass = allTechs || !techLines.length || techLines.some(l=>calFilters.techs.has(l.technician_id));
+    const catPass  = allCats  || !eqLines.length   || eqLines.some(l=>calFilters.cats.has(catOf(l.equipment_id)));
+    return techPass && catPass;
   }).map(q=>{
     const days = dayCount(q.start_date,q.end_date,false);
     let conflict = false;
