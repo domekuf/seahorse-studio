@@ -8,7 +8,7 @@
 :root{
   --bg:#0a0a0a; --surface:#111; --surface2:#161616; --surface3:#1c1c1c;
   --border:#2e2e2e; --border-soft:#222;
-  --text:#ededed; --muted:#666; --muted2:#8a8a8a;
+  --text:#ededed; --muted:#7d7d7d; --muted2:#a3a3a3;
   --teal:#4abcbc; --teal-dim:#2d7373; --teal-glow:#4abcbc33;
   --danger:#ef4444; --warn:#f59e0b; --ok:#4abcbc;
   --r:6px;
@@ -18,7 +18,7 @@
 html,body{height:100%}
 body{
   background:var(--bg);color:var(--text);
-  font-family:var(--mono);font-size:13px;line-height:1.5;
+  font-family:var(--mono);font-size:14px;line-height:1.55;
   -webkit-font-smoothing:antialiased;
 }
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
@@ -43,7 +43,7 @@ a{color:var(--teal);text-decoration:none}
 }
 #lock button:hover{background:#5fd0d0}
 #lock button:disabled{opacity:.5;cursor:default}
-#lock-err{color:var(--danger);min-height:18px;text-align:center;font-size:12px}
+#lock-err{color:var(--danger);min-height:18px;text-align:center;font-size:13px}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .shake{animation:shake .35s}
 
@@ -64,9 +64,9 @@ nav a{
 }
 nav a:hover{background:var(--surface2);color:var(--text)}
 nav a.active{background:var(--surface3);color:var(--teal)}
-nav a .count{font-size:11px;color:var(--muted)}
+nav a .count{font-size:12px;color:var(--muted)}
 .side-foot{padding:0 18px;display:flex;flex-direction:column;gap:10px}
-#sync{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+#sync{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
 #sync .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .2s,box-shadow .2s}
 #sync.live .dot{background:var(--teal)}
 #sync.pulse .dot{background:var(--teal);box-shadow:0 0 0 4px var(--teal-glow)}
@@ -79,8 +79,8 @@ main{margin-left:240px;padding:26px 30px 70px;max-width:1500px}
 
 /* ---------- COMMON ---------- */
 .head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
-h1{font-size:17px;font-weight:700;letter-spacing:.05em}
-.sub{color:var(--muted);font-size:12px;margin-top:3px}
+h1{font-size:19px;font-weight:700;letter-spacing:.05em}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
 .row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .btn{
   background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);
@@ -90,7 +90,7 @@ h1{font-size:17px;font-weight:700;letter-spacing:.05em}
 .btn.primary{background:var(--teal);color:#04201f;border-color:var(--teal);font-weight:700}
 .btn.primary:hover{background:#5fd0d0}
 .btn.danger:hover{border-color:var(--danger);color:var(--danger)}
-.btn.sm{padding:4px 9px;font-size:12px}
+.btn.sm{padding:5px 10px;font-size:13px}
 .btn:disabled{opacity:.45;cursor:default}
 input,select,textarea{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
@@ -99,31 +99,31 @@ input,select,textarea{
 input:focus,select:focus,textarea:focus{border-color:var(--teal)}
 input[type=number]{text-align:right}
 input.inv{border-color:var(--danger)}
-label{display:block;font-size:11px;color:var(--muted);letter-spacing:.07em;margin-bottom:5px}
+label{display:block;font-size:12px;color:var(--muted);letter-spacing:.07em;margin-bottom:6px}
 .field{margin-bottom:13px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:18px}
 .card>h2{
-  font-size:11px;letter-spacing:.15em;color:var(--muted);font-weight:600;
+  font-size:12px;letter-spacing:.15em;color:var(--muted);font-weight:600;
   padding:12px 16px;border-bottom:1px solid var(--border-soft);
 }
 .card>.body{padding:16px}
 
 table{width:100%;border-collapse:collapse}
 th{
-  text-align:left;font-size:10px;letter-spacing:.14em;color:var(--muted);font-weight:600;
-  padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap;
+  text-align:left;font-size:11px;letter-spacing:.14em;color:var(--muted);font-weight:600;
+  padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;
 }
-td{padding:9px 12px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
+td{padding:10px 12px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
 tbody tr:hover{background:var(--surface2)}
 tbody tr.exp{background:var(--surface2)}
 .num{text-align:right;font-variant-numeric:tabular-nums}
 .empty{padding:40px;text-align:center;color:var(--muted)}
 
 .tag{
-  display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;
+  display:inline-block;padding:3px 8px;border-radius:3px;font-size:11px;
   letter-spacing:.08em;border:1px solid var(--border);color:var(--muted2);
 }
 .tag.teal{border-color:var(--teal-dim);color:var(--teal)}
@@ -138,7 +138,7 @@ tbody tr.exp{background:var(--surface2)}
 #modal{position:fixed;inset:0;z-index:900;background:#000000cc;display:none;align-items:flex-start;justify-content:center;padding:60px 20px;overflow:auto}
 #modal.on{display:flex}
 #modal .box{background:var(--surface);border:1px solid var(--border);border-radius:8px;width:100%;max-width:560px}
-#modal .box h3{font-size:13px;letter-spacing:.08em;padding:15px 18px;border-bottom:1px solid var(--border-soft)}
+#modal .box h3{font-size:14px;letter-spacing:.08em;padding:15px 18px;border-bottom:1px solid var(--border-soft)}
 #modal .box .content{padding:18px}
 #modal .box .foot{display:flex;justify-content:flex-end;gap:9px;padding:14px 18px;border-top:1px solid var(--border-soft)}
 
@@ -149,8 +149,8 @@ tbody tr.exp{background:var(--surface2)}
   border-radius:var(--r);padding:11px 15px;max-width:360px;box-shadow:0 8px 26px #000a;
 }
 .toast.err{border-left-color:var(--danger)}
-.toast b{display:block;font-size:11px;letter-spacing:.09em;margin-bottom:2px}
-.toast span{color:var(--muted2);font-size:12px}
+.toast b{display:block;font-size:12px;letter-spacing:.09em;margin-bottom:2px}
+.toast span{color:var(--muted2);font-size:13px}
 
 /* ---------- QUOTE BUILDER ---------- */
 .line-tbl td{padding:6px 8px}
@@ -158,29 +158,29 @@ tbody tr.exp{background:var(--surface2)}
 .totals{display:flex;flex-direction:column;gap:0}
 .totals .t{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-soft)}
 .totals .t span:last-child{font-variant-numeric:tabular-nums}
-.totals .t.big{border-bottom:none;padding-top:13px;font-size:15px;font-weight:700;color:var(--teal)}
+.totals .t.big{border-bottom:none;padding-top:13px;font-size:17px;font-weight:700;color:var(--teal)}
 .totals .t.sub{color:var(--muted)}
 .totals .t.neg span:last-child{color:var(--danger)}
 .switch{display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
 .switch input{width:auto;accent-color:var(--teal)}
-.avail{font-size:11px;color:var(--muted)}
+.avail{font-size:12px;color:var(--muted)}
 
 /* ---------- CALENDAR ---------- */
 #cal-wrap{display:grid;grid-template-columns:210px 1fr;gap:18px;align-items:start}
 #cal-filters{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;position:sticky;top:26px}
-#cal-filters h4{font-size:10px;letter-spacing:.14em;color:var(--muted);margin:14px 0 8px}
+#cal-filters h4{font-size:11px;letter-spacing:.14em;color:var(--muted);margin:14px 0 8px}
 #cal-filters h4:first-child{margin-top:0}
-#cal-filters label{display:flex;align-items:center;gap:7px;margin:0 0 5px;font-size:12px;color:var(--text);letter-spacing:0;cursor:pointer}
+#cal-filters label{display:flex;align-items:center;gap:7px;margin:0 0 6px;font-size:13px;color:var(--text);letter-spacing:0;cursor:pointer}
 #cal-filters input{width:auto;accent-color:var(--teal)}
 #calendar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px}
-.fc{--fc-border-color:var(--border-soft);--fc-page-bg-color:transparent;--fc-neutral-bg-color:var(--surface2);--fc-today-bg-color:#4abcbc12;font-size:12px}
-.fc .fc-toolbar-title{font-size:14px;letter-spacing:.05em}
-.fc .fc-button{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important;box-shadow:none!important;text-transform:capitalize;font-size:12px!important}
+.fc{--fc-border-color:var(--border-soft);--fc-page-bg-color:transparent;--fc-neutral-bg-color:var(--surface2);--fc-today-bg-color:#4abcbc12;font-size:13px}
+.fc .fc-toolbar-title{font-size:15px;letter-spacing:.05em}
+.fc .fc-button{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important;box-shadow:none!important;text-transform:capitalize;font-size:13px!important}
 .fc .fc-button:hover{background:var(--surface3)!important}
 .fc .fc-button-primary:disabled{opacity:.4}
-.fc .fc-daygrid-day-number{color:var(--muted2);font-size:11px}
-.fc .fc-col-header-cell-cushion{color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
-.fc-event{border:none!important;font-size:11px;padding:1px 4px;cursor:pointer}
+.fc .fc-daygrid-day-number{color:var(--muted2);font-size:12px}
+.fc .fc-col-header-cell-cushion{color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.fc-event{border:none!important;font-size:12px;padding:2px 5px;cursor:pointer}
 
 /* ---------- PRINT ---------- */
 #print-area{display:none}
@@ -788,11 +788,11 @@ function techModal(id){
 /* ============================================================
    VIEW — QUOTE BUILDER
    ============================================================ */
-let draftKey = null, unlocked = false;
+let draftKey = null, unlocked = false, multiDay = false;
 
 function newDraft(){
   return { id:null, quote_number:nextQuoteNumber(), client_id:null, issue_date:todayISO(),
-           start_date:"", end_date:"", include_setup_day:false,
+           start_date:todayISO(), end_date:todayISO(), include_setup_day:false,
            equipment_lines:[], technician_lines:[], extras:[],
            discount_pct:0, surcharge_pct:0, tax_enabled:true, withholding_enabled:false,
            status:"Draft", total:0 };
@@ -809,7 +809,8 @@ function viewQuote(id, isRefresh){
       draft.technician_lines = draft.technician_lines || [];
       draft.extras           = draft.extras           || [];
       unlocked = false;
-    } else { draft = newDraft(); unlocked = true; }
+      multiDay = !!(draft.end_date && draft.end_date !== draft.start_date);
+    } else { draft = newDraft(); unlocked = true; multiDay = false; }
     draftKey = key;
   }
   if(!draft){ draft = newDraft(); draftKey = "new"; unlocked = true; }
@@ -848,12 +849,17 @@ function renderQuote(){
 
     <div class="card"><h2>PERIOD</h2><div class="body">
       <div class="grid3">
-        <div class="field"><label>Start date</label><input type="date" id="q-start" value="${draft.start_date||""}" ${dis}></div>
-        <div class="field"><label>End date</label><input type="date" id="q-end" value="${draft.end_date||""}" ${dis}></div>
+        <div class="field"><label>${multiDay ? "Start date" : "Date"}</label>
+          <input type="date" id="q-start" value="${draft.start_date||""}" ${dis}></div>
+        ${multiDay
+          ? `<div class="field"><label>End date</label>
+               <input type="date" id="q-end" value="${draft.end_date||""}" min="${draft.start_date||""}" ${dis}></div>`
+          : `<div></div>`}
         <div class="field"><label>Billable days</label>
-          <div style="padding:7px 0;font-size:15px;font-weight:700;color:var(--teal)">${c.days}</div></div>
+          <div style="padding:7px 0;font-size:17px;font-weight:700;color:var(--teal)">${c.days}</div></div>
       </div>
-      <label class="switch"><input type="checkbox" id="q-setup" ${draft.include_setup_day?"checked":""} ${dis}> Include travel / setup day (+1)</label>
+      <label class="switch"><input type="checkbox" id="q-multi" ${multiDay?"checked":""} ${dis}> Runs over more than one day</label>
+      <label class="switch" style="margin-top:9px"><input type="checkbox" id="q-setup" ${draft.include_setup_day?"checked":""} ${dis}> Include travel / setup day (+1)</label>
     </div></div>
 
     <div class="card"><h2>EQUIPMENT</h2><div class="body">
@@ -899,8 +905,20 @@ function renderQuote(){
   bind("#q-status","change", e=>{ draft.status = e.target.value; renderQuote(); });
   bind("#q-client","change", e=>draft.client_id = e.target.value || null);
   bind("#q-newclient","click", ()=>clientModal(null));
-  bind("#q-start","change", e=>{ draft.start_date = e.target.value; syncTechDays(); renderQuote(); });
-  bind("#q-end","change",   e=>{ draft.end_date   = e.target.value; syncTechDays(); renderQuote(); });
+  bind("#q-start","change", e=>{
+    draft.start_date = e.target.value;
+    if(!multiDay || !draft.end_date || draft.end_date < draft.start_date) draft.end_date = draft.start_date;
+    syncTechDays(); renderQuote();
+  });
+  bind("#q-end","change", e=>{
+    draft.end_date = e.target.value < draft.start_date ? draft.start_date : e.target.value;
+    syncTechDays(); renderQuote();
+  });
+  bind("#q-multi","change", e=>{
+    multiDay = e.target.checked;
+    if(!multiDay) draft.end_date = draft.start_date;
+    syncTechDays(); renderQuote();
+  });
   bind("#q-setup","change", e=>{ draft.include_setup_day = e.target.checked; syncTechDays(); renderQuote(); });
   bind("#q-disc","input",  e=>{ draft.discount_pct  = num(e.target.value); renderTotals(); });
   bind("#q-surch","input", e=>{ draft.surcharge_pct = num(e.target.value); renderTotals(); });
@@ -1210,7 +1228,7 @@ function viewCalendar(){
         <h4>TECHNICIANS</h4>
         ${state.technicians.length ? state.technicians.map(t=>
           `<label><input type="checkbox" class="f-te" value="${t.id}" ${calFilters.techs.has(t.id)?"checked":""}>${esc(t.full_name)}</label>`).join("")
-          : `<div class="mut" style="font-size:12px">None</div>`}
+          : `<div class="mut" style="font-size:13px">None</div>`}
         <h4>EQUIPMENT CATEGORY</h4>
         ${CATEGORIES.map(c=>`<label><input type="checkbox" class="f-cat" value="${c}" ${calFilters.cats.has(c)?"checked":""}>${c}</label>`).join("")}
         <div style="margin-top:14px"><button class="btn sm" id="f-all">Select all</button></div>
@@ -1278,9 +1296,9 @@ function quotePopover(q, conflict){
     </div>
     ${conflict && issues.size ? `<div class="card" style="border-color:#7f1d1d"><div class="body">
       <b class="warn-txt">Over-booked</b><div class="mut" style="margin-top:5px">${[...issues].map(esc).join("<br>")}</div></div></div>` : ""}
-    <div class="p-sec mut" style="font-size:10px;letter-spacing:.14em;margin-bottom:6px">EQUIPMENT</div>
+    <div class="p-sec mut" style="font-size:11px;letter-spacing:.14em;margin-bottom:6px">EQUIPMENT</div>
     <div class="mut" style="margin-bottom:12px">${c.eq.length ? c.eq.map(l=>`${esc(l.name)} ×${num(l.qty)}`).join(" · ") : "none"}</div>
-    <div class="p-sec mut" style="font-size:10px;letter-spacing:.14em;margin-bottom:6px">TECHNICIANS</div>
+    <div class="p-sec mut" style="font-size:11px;letter-spacing:.14em;margin-bottom:6px">TECHNICIANS</div>
     <div class="mut" style="margin-bottom:12px">${c.tech.length ? c.tech.map(l=>esc(l.name)).join(" · ") : "none"}</div>
     <div style="font-size:16px;font-weight:700;color:var(--teal)">${money(q.total)}</div>`,
   [
